@@ -11,7 +11,6 @@ GOTOTWRPIMAGE() {
 	QUEUE=""
 	MAX_NPROC=$(grep "processor	:" < /proc/cpuinfo | wc -l) # default
 	MAX_NPROC=$(($MAX_NPROC+1))
-	REPLACE_CMD=0 # no replacement by default
 
 queue() {
 	QUEUE="$QUEUE $1"
@@ -73,16 +72,14 @@ checkqueue() {
 		echo " "
 		echo Porting "${IMAGEFILE}" from $SIZEW'x'$SIZEH to $FINALW'x'$FINALH
 		# Convert image to new sizes
-		CMD=`gm mogrify -resize $FINALW'x'$FINALH! "${IMAGEFILEDIR}"/"${IMAGEFILE}"`
-
-		eval $CMD &
+		gm convert -size  $FINALW'x'$FINALH! "${IMAGEFILEDIR}"/"${IMAGEFILE}" -resize $FINALW'x'$FINALH! "${IMAGEFILEDIR}"/"${IMAGEFILE}" &
 
 		PID=$!
 		queue $PID
 
 		while [ $NUM -ge $MAX_NPROC ]; do
 			checkqueue
-			#sleep 0.4
+			sleep 0.4
 		done
 	done
 	wait # wait for all processes to finish before exit
