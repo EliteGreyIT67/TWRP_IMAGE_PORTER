@@ -340,7 +340,7 @@ location=$(echo "$line" | egrep -o '[0-9]+:' | egrep -o '[0-9]+')
 H=$(echo "$line" | egrep -o ' h="[0-9]+" ' | egrep -o '[0-9]+')
 
 # If value is not 0 or null then proceed.
-if [ -n "$H" -a "H" -gt 0 ]; then
+if [ -n "$H" -a "$H" -gt 0 ]; then
 	# Need this variable to calculate.
 	SIZEH="$H"
 	# Calculate for new value.
