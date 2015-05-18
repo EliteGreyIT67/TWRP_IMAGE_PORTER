@@ -3,7 +3,7 @@
 # Written by Modding.MyMind/ModdingMyMind
 # XDA Member ©2015
 
-VERSION=5.2
+VERSION=5.3
 
 GOTOTWRPIMAGE() {
 
@@ -79,7 +79,7 @@ checkqueue() {
 
 		while [ $NUM -ge $MAX_NPROC ]; do
 			checkqueue
-			sleep 0.4
+			#sleep 0.4
 		done
 	done
 	wait # wait for all processes to finish before exit
