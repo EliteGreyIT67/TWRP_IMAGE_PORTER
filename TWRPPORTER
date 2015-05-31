@@ -3,7 +3,7 @@
 # Written by Modding.MyMind/ModdingMyMind
 # XDA Member ©2015
 
-VERSION=5.3.2
+VERSION=5.3.3
 
 GOTOTWRPIMAGE() {
 
@@ -39,22 +39,10 @@ checkqueue() {
 	done
 }
 
-	if [ ! -f "${P_IMAGES}"/image_dir.txt ]; then
-		busybox touch "${P_IMAGES}"/image_dir.txt
-	else
-		rm -f "${P_IMAGES}"/image_dir.txt
-		busybox touch "${P_IMAGES}"/image_dir.txt
-	fi
-
 	# Find the images to be ported.
-	if output=$(find "${P_IMAGES}" -type f -iname "*.png" -o -iname "*.jpg"); then
-		echo "${output}" > "${P_IMAGES}"/image_dir.txt
-	fi
+	images=$(find "${P_IMAGES}" -type f -iname "*.png" -o -iname "*.jpg")
 
-	filename="${P_IMAGES}"/image_dir.txt
-	filelines=$(cat "${filename}")
-
-	for line in $filelines; do
+	for line in $images; do
 		# Remember the directory and filename
 		local IMAGEFILE="$(basename "${line}")"
 		local IMAGEFILEDIR="$(dirname "${line}")"
@@ -83,10 +71,6 @@ checkqueue() {
 		done
 	done
 	wait # wait for all processes to finish before exit
-
-	if [ -f "${P_IMAGES}"/image_dir.txt ]; then
-		rm -rf "${P_IMAGES}"/image_dir.txt
-	fi
 
 	if [ $OPT == "1" ]; then
 		HEADSUP
@@ -773,6 +757,15 @@ else
 	clear; exit 0
 fi
 
+# This is for development purposes only.
+# By calling on this script followed by the arg, clean, it will remove the embedded data in this script.
+# May require root privileges prior to calling it.
+if [ "$1" == "clean" ]; then
+	sed -i '/^\__EMBEDDED_DATA_BELOW__/,$ d' "$(dirname $0)"/TWRPPORTER
+	clear; echo "Embedded data removed!"
+	sleep 1.5
+	exit 0
+fi
 
 #Call on functions
 THEME_DIRECTORY
