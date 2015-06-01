@@ -3,7 +3,69 @@
 # Written by Modding.MyMind/ModdingMyMind
 # XDA Member ©2015
 
-VERSION=5.3.3
+VERSION=5.4
+
+PNGCRUSH() {
+
+	NUM=0
+	QUEUE=""
+	MAX_NPROC=$((($(echo /sys/devices/system/cpu/cpu[0-9]* | wc -w)*3)/2)) # default
+
+queue() {
+	QUEUE="$QUEUE $1"
+	NUM=$(($NUM+1))
+}
+
+regeneratequeue() {
+	OLDREQUEUE=$QUEUE
+	QUEUE=""
+	NUM=0
+	for PID in $OLDREQUEUE; do
+		if [ -d /proc/$PID ]; then
+			QUEUE="$QUEUE $PID"
+			NUM=$(($NUM+1))
+		fi
+	done
+}
+
+checkqueue() {
+	OLDCHQUEUE=$QUEUE
+	for PID in $OLDCHQUEUE; do
+		if [ ! -d /proc/$PID ]; then
+			regeneratequeue # at least one PID has finished
+			break
+		fi
+	done
+}
+
+	# Find all PNG images to be optimized.
+	images=$(find "${P_IMAGES}" -type f -iname "*.png")
+
+	for line in $images; do
+		# Remember the directory and filename
+		local IMAGEFILE="$(basename "${line}")"
+		local IMAGEFILEDIR="$(dirname "${line}")"
+
+		# Inform user which image is being optimized then conduct the optimization.
+		echo " "
+		echo Optimizing "${IMAGEFILE}"
+		pngcrush "${IMAGEFILEDIR}"/"${IMAGEFILE}" "${IMAGEFILEDIR}"/"${IMAGEFILE%.png}-crushed.png" &> /dev/null && mv "${IMAGEFILEDIR}"/"${IMAGEFILE%.png}-crushed.png" "${IMAGEFILEDIR}"/"${IMAGEFILE}" &
+
+		PID=$!
+		queue $PID
+
+		while [ $NUM -ge $MAX_NPROC ]; do
+			checkqueue
+			#sleep 0.4
+		done
+
+	done
+	wait # wait for all processes to finish before exit
+
+	if [ $OPT == "5" ]; then
+		HEADSUP
+	fi
+}
 
 GOTOTWRPIMAGE() {
 
@@ -775,19 +837,21 @@ PORT_DEVICE
 
 HEADSUP() {
 CHECKGM=`command -v gm`
-if [ ! $CHECKGM ]; then
+CHECKPNGCRUSH=`command -v pngcrush`
+if [ ! $CHECKGM ] && [ ! $CHECKPNGCRUSH ]; then
 	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
 	echo " "
 	echo "Please select your option:"
-	echo "1. Port TWRP Images"
-	echo "2. Port TWRP XML(s)"
-	echo "3. Port Images & XML(s)"
-	echo "4. Resize TTF Font(s)"
-	echo "5. Change Theme Directory"
-	echo "6. Change Base Resolution"
-	echo "7. Change Port Resolution"
-	echo "8. Install GraphicsMagick [KitKat Or Below]"
-	echo "9. Install GraphicsMagick [Lollipop Only]"
+	echo "1. Port TWRP Images (GM)"
+	echo "2. Port TWRP XML"
+	echo "3. Port Images (GM) & XML"
+	echo "4. Resize TTF Fonts"
+	echo "5. Optimize PNG Image's (pngcrush)"
+	echo "6. Change Theme Directory"
+	echo "7. Change Base Resolution"
+	echo "8. Change Port Resolution"
+	echo "9. Install GraphicsMagick"
+	echo "10. Install pngcrush"
 	echo "Q/q - Exit Script"
 	echo " "
 	read "OPT?Option: "
@@ -800,13 +864,15 @@ if [ ! $CHECKGM ]; then
 							if [[ ! $OPT == "7" ]]; then
 								if [[ ! $OPT == "8" ]]; then
 									if [[ ! $OPT == "9" ]]; then
-										if [[ ! $OPT == q ]]; then
-											if [[ ! $OPT == Q ]]; then
-												clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
-												echo " "
-												echo "Invalid Input: Please try again!"
-												sleep 3
-												HEADSUP
+										if [[ ! $OPT == "10" ]]; then
+											if [[ ! $OPT == q ]]; then
+												if [[ ! $OPT == Q ]]; then
+													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
+													echo " "
+													echo "Invalid Input: Please try again!"
+													sleep 3
+													HEADSUP
+												fi
 											fi
 										fi
 									fi
@@ -823,26 +889,29 @@ if [ ! $CHECKGM ]; then
 		2) TWRPUILOOP ;;
 		3) GOTOTWRPIMAGE && TWRPUILOOP ;;
 		4) GOTOTTFFONT ;;
-		5) THEME_DIRECTORY ;;
-		6) BASE_DEVICE ;;
-		7) PORT_DEVICE ;;
-		8) INSTALLGM ;;
-		9) LOLLIPOP=9; INSTALLGM ;;
+		5) PNGCRUSH ;;
+		6) THEME_DIRECTORY ;;
+		7) BASE_DEVICE ;;
+		8) PORT_DEVICE ;;
+		9) INSTALLGM ;;
+		10) INSTALLPNGCRUSH ;;
 		Q) clear; echo "Goodbye"; read; clear; exit;;
 		q) clear; echo "Goodbye"; read; clear; exit;;
 	esac
-else
+elif [[ -n $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
 	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
 	echo " "
 	echo "Please select your option:"
-	echo "1. Port TWRP Images"
-	echo "2. Port TWRP XML(s)"
-	echo "3. Port Images & XML(s)"
-	echo "4. Resize TTF Font(s)"
-	echo "5. Change Theme Directory"
-	echo "6. Change Base Resolution"
-	echo "7. Change Port Resolution"
-	echo "8. Uninstall GraphicsMagick"
+	echo "1. Port TWRP Images (GM)"
+	echo "2. Port TWRP XML"
+	echo "3. Port Images (GM) & XML"
+	echo "4. Resize TTF Fonts"
+	echo "5. Optimize PNG Image's (pngcrush)"
+	echo "6. Change Theme Directory"
+	echo "7. Change Base Resolution"
+	echo "8. Change Port Resolution"
+	echo "9. Uninstall GraphicsMagick"
+	echo "10. Uninstall pngcrush"
 	echo "Q/q - Exit Script"
 	echo " "
 	read "OPT?Option: "
@@ -854,13 +923,17 @@ else
 						if [[ ! $OPT == "6" ]]; then
 							if [[ ! $OPT == "7" ]]; then
 								if [[ ! $OPT == "8" ]]; then
-									if [[ ! $OPT == q ]]; then
-										if [[ ! $OPT == Q ]]; then
-											clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
-											echo " "
-											echo "Invalid Input: Please try again!"
-											sleep 3
-											HEADSUP
+									if [[ ! $OPT == "9" ]]; then
+										if [[ ! $OPT == "10" ]]; then
+											if [[ ! $OPT == q ]]; then
+												if [[ ! $OPT == Q ]]; then
+													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
+													echo " "
+													echo "Invalid Input: Please try again!"
+													sleep 3
+													HEADSUP
+												fi
+											fi
 										fi
 									fi
 								fi
@@ -876,41 +949,203 @@ else
 		2) TWRPUILOOP ;;
 		3) GOTOTWRPIMAGE && TWRPUILOOP ;;
 		4) GOTOTTFFONT ;;
-		5) THEME_DIRECTORY ;;
-		6) BASE_DEVICE ;;
-		7) PORT_DEVICE ;;
-		8) UNINSTALLGM; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "GraphicsMagick is uninstalled!"; HACKBEGONEMSG; sleep 3; HEADSUP ;;
+		5) PNGCRUSH ;;
+		6) THEME_DIRECTORY ;;
+		7) BASE_DEVICE ;;
+		8) PORT_DEVICE ;;
+		9) UNINSTALLGM; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "GraphicsMagick is uninstalled!"; sleep 2; HEADSUP ;;
+		10) UNINSTALLPNGCRUSH; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "pngcrush is uninstalled!"; sleep 2; HEADSUP ;;
+		Q) clear; echo "Goodbye"; read; clear; exit;;
+		q) clear; echo "Goodbye"; read; clear; exit;;
+	esac
+elif [[ -z $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
+	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
+	echo " "
+	echo "Please select your option:"
+	echo "1. Port TWRP Images (GM)"
+	echo "2. Port TWRP XML"
+	echo "3. Port Images (GM) & XML"
+	echo "4. Resize TTF Fonts"
+	echo "5. Optimize PNG Image's (pngcrush)"
+	echo "6. Change Theme Directory"
+	echo "7. Change Base Resolution"
+	echo "8. Change Port Resolution"
+	echo "9. Install GraphicsMagick"
+	echo "10. Uninstall pngcrush"
+	echo "Q/q - Exit Script"
+	echo " "
+	read "OPT?Option: "
+	if [[ ! $OPT == "1" ]]; then
+		if [[ ! $OPT == "2" ]]; then
+			if [[ ! $OPT == "3" ]]; then
+				if [[ ! $OPT == "4" ]]; then
+					if [[ ! $OPT == "5" ]]; then
+						if [[ ! $OPT == "6" ]]; then
+							if [[ ! $OPT == "7" ]]; then
+								if [[ ! $OPT == "8" ]]; then
+									if [[ ! $OPT == "9" ]]; then
+										if [[ ! $OPT == "10" ]]; then
+											if [[ ! $OPT == q ]]; then
+												if [[ ! $OPT == Q ]]; then
+													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
+													echo " "
+													echo "Invalid Input: Please try again!"
+													sleep 3
+													HEADSUP
+												fi
+											fi
+										fi
+									fi
+								fi
+							fi
+						fi
+					fi
+				fi
+			fi
+		fi
+	fi
+	case $OPT in
+		1) GOTOTWRPIMAGE ;;
+		2) TWRPUILOOP ;;
+		3) GOTOTWRPIMAGE && TWRPUILOOP ;;
+		4) GOTOTTFFONT ;;
+		5) PNGCRUSH ;;
+		6) THEME_DIRECTORY ;;
+		7) BASE_DEVICE ;;
+		8) PORT_DEVICE ;;
+		9) INSTALLGM ;;
+		10) UNINSTALLPNGCRUSH; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "pngcrush is uninstalled!"; sleep 2; HEADSUP ;;
+		Q) clear; echo "Goodbye"; read; clear; exit;;
+		q) clear; echo "Goodbye"; read; clear; exit;;
+	esac
+elif [[ -n $CHECKGM ]] && [[ -z $CHECKPNGCRUSH ]]; then
+	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
+	echo " "
+	echo "Please select your option:"
+	echo "1. Port TWRP Images (GM)"
+	echo "2. Port TWRP XML"
+	echo "3. Port Images (GM) & XML"
+	echo "4. Resize TTF Fonts"
+	echo "5. Optimize PNG Image's (pngcrush)"
+	echo "6. Change Theme Directory"
+	echo "7. Change Base Resolution"
+	echo "8. Change Port Resolution"
+	echo "9. Uninstall GraphicsMagick"
+	echo "10. Install pngcrush"
+	echo "Q/q - Exit Script"
+	echo " "
+	read "OPT?Option: "
+	if [[ ! $OPT == "1" ]]; then
+		if [[ ! $OPT == "2" ]]; then
+			if [[ ! $OPT == "3" ]]; then
+				if [[ ! $OPT == "4" ]]; then
+					if [[ ! $OPT == "5" ]]; then
+						if [[ ! $OPT == "6" ]]; then
+							if [[ ! $OPT == "7" ]]; then
+								if [[ ! $OPT == "8" ]]; then
+									if [[ ! $OPT == "9" ]]; then
+										if [[ ! $OPT == "10" ]]; then
+											if [[ ! $OPT == q ]]; then
+												if [[ ! $OPT == Q ]]; then
+													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
+													echo " "
+													echo "Invalid Input: Please try again!"
+													sleep 3
+													HEADSUP
+												fi
+											fi
+										fi
+									fi
+								fi
+							fi
+						fi
+					fi
+				fi
+			fi
+		fi
+	fi
+	case $OPT in
+		1) GOTOTWRPIMAGE ;;
+		2) TWRPUILOOP ;;
+		3) GOTOTWRPIMAGE && TWRPUILOOP ;;
+		4) GOTOTTFFONT ;;
+		5) PNGCRUSH ;;
+		6) THEME_DIRECTORY ;;
+		7) BASE_DEVICE ;;
+		8) PORT_DEVICE ;;
+		9) UNINSTALLGM; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "GraphicsMagick is uninstalled!"; sleep 2; HEADSUP ;;
+		10) INSTALLPNGCRUSH ;;
 		Q) clear; echo "Goodbye"; read; clear; exit;;
 		q) clear; echo "Goodbye"; read; clear; exit;;
 	esac
 fi
 }
 
-HACKBEGONEMSG() {
-if [ "$hackbegone" == "1" ]; then 
-	echo " "; 
-	echo "Uninstalled Lollipop Hack!"; 
+# Uninstall pngcrush
+UNINSTALLPNGCRUSH() {
+
+if [ -f "/system/bin/pngcrush" ]; then
+	# Mount system as RW.
+	$SU busybox mount -o remount,rw -t auto /system
+	$SU busybox rm -rf "/system/bin/pngcrush"
+	# Mount system as RO.
+	$SU busybox mount -o remount,ro -t auto /system
 fi
 }
 
-# Uninstall GM and remove hack for Lollipop
+# Uninstall GM
 UNINSTALLGM() {
 
 if [ -f "/system/bin/gm" ]; then
 	# Mount system as RW.
 	$SU busybox mount -o remount,rw -t auto /system
 	$SU busybox rm -rf "/system/bin/gm"
-		if [ -f "/system/bin/linker.mymind" ]; then
-			$SU busybox rm -rf "/system/bin/linker"
-			$SU busybox mv "/system/bin/linker.mymind" "/system/bin/linker"
-			$SU chmod -R 755 "/system/bin/linker"
-			# Mount system as RO.
-			$SU busybox mount -o remount,ro -t auto /system
-			hackbegone=1
-		else
-			# Mount system as RO.
-			$SU busybox mount -o remount,ro -t auto /system
-		fi
+	# Mount system as RO.
+	$SU busybox mount -o remount,ro -t auto /system
+fi
+}
+
+INSTALLPNGCRUSH() {
+
+# Call function here
+if [ -z $OPT ]; then
+	HEADSUP
+else
+	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
+	echo " "
+	echo "Installing pngcrush!"
+	echo " "
+
+	sleep 2
+
+	TMPDIR=`$SU mkdir /data/local/tmp/selfextract.MyMind`
+	TMPDIR2="/data/local/tmp/selfextract.MyMind"
+
+	ARCHIVE=`awk '/^__EMBEDDED_DATA_BELOW__/ {print NR + 1; exit 0; }' $0`
+
+	$SU tail -n+$ARCHIVE $0 | $SU tar -xz -C "$TMPDIR2"
+
+	$SU chmod -R 755 "$TMPDIR2"
+
+	# Mount system as RW.
+	$SU busybox mount -o remount,rw -t auto /system
+
+	$SU busybox mv "$TMPDIR2"/pngcrush "/system/bin/pngcrush"
+
+	CDIR=`pwd`
+
+	cd $CDIR
+	$SU rm -r "$TMPDIR2"
+
+	# Mount system as RO.
+	$SU busybox mount -o remount,ro -t auto /system
+
+	echo " "
+	echo "pngcrush has been installed!"
+
+	sleep 2
+
+	HEADSUP
 fi
 }
 
@@ -923,10 +1158,6 @@ else
 	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
 	echo " "
 	echo "Installing GraphicsMagick!"
-	if [ "$LOLLIPOP" == "9" ]; then
-		echo " "
-		echo "Bypassing PIE restrictions for Lollipop!"
-	fi
 	echo " "
 
 	sleep 2
@@ -936,7 +1167,7 @@ else
 
 	ARCHIVE=`awk '/^__EMBEDDED_DATA_BELOW__/ {print NR + 1; exit 0; }' $0`
 
-	$SU tail -n+$ARCHIVE $0 | $SU tar -xzv -C "$TMPDIR2"
+	$SU tail -n+$ARCHIVE $0 | $SU tar -xz -C "$TMPDIR2"
 
 	$SU chmod -R 755 "$TMPDIR2"
 
@@ -944,15 +1175,6 @@ else
 	$SU busybox mount -o remount,rw -t auto /system
 
 	$SU busybox mv "$TMPDIR2"/gm "/system/bin/gm"
-
-	if [ "$LOLLIPOP" == "9" ]; then
-		if [ ! -f "/system/bin/linker.mymind" ]; then
-			$SU busybox mv "/system/bin/linker" "/system/bin/linker.mymind"
-			$SU busybox mv "$TMPDIR2"/linker "/system/bin/linker"
-			LOLLIPOP=0
-		fi
-		LOLLIPOP=0
-	fi
 
 	CDIR=`pwd`
 
