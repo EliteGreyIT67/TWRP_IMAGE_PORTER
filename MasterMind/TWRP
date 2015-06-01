@@ -3,7 +3,7 @@
 # Written by Modding.MyMind/ModdingMyMind
 # XDA Member ©2015
 
-VERSION=5.4
+VERSION=5.4.1
 
 PNGCRUSH() {
 
@@ -717,7 +717,7 @@ BASE_DEVICE() {
 			read -n1 any_key
 			clear; BASE_DEVICE
 		fi
-	if [ "$OPT" == "6" ]; then
+	if [ "$OPT" == "7" ]; then
 		HEADSUP
 	fi
 }
@@ -744,7 +744,7 @@ PORT_DEVICE() {
 			read -n1 any_key
 			clear; PORT_DEVICE
 		fi
-	if [ "$OPT" == "7" ]; then
+	if [ "$OPT" == "8" ]; then
 		HEADSUP
 	fi
 }
@@ -770,7 +770,7 @@ THEME_DIRECTORY() {
 			read -n1 any_key
 			clear; THEME_DIRECTORY
 		fi
-	if [ "$OPT" == "5" ]; then
+	if [ "$OPT" == "6" ]; then
 		HEADSUP
 	fi
 }
