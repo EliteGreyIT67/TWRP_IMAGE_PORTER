@@ -1,15 +1,22 @@
 #!/system/bin/sh
 
-# Written by Modding.MyMind/ModdingMyMind
+# Written by SHM
 # XDA Member ©2015
 
-VERSION=5.4.1
+# $0 is the name of the command
+# $1 first parameter
+# $2 second parameter
+# $3 third parameter etc. etc.
+# $# total number of parameters
+# $@ all the parameters will be listed
+
+VERSION=5.4.2
 
 PNGCRUSH() {
 
 	NUM=0
 	QUEUE=""
-	MAX_NPROC=$((($(echo /sys/devices/system/cpu/cpu[0-9]* | wc -w)*3)/2)) # default
+	MAX_NPROC=$((($(echo /sys/devices/system/cpu/cpu[0-9]* | wc -w)*2)/2)) # default
 
 queue() {
 	QUEUE="$QUEUE $1"
@@ -39,9 +46,7 @@ checkqueue() {
 }
 
 	# Find all PNG images to be optimized.
-	images=$(find "${P_IMAGES}" -type f -iname "*.png")
-
-	for line in $images; do
+	for line in $(find "${P_IMAGES}" -type f -iname "*.png"); do
 		# Remember the directory and filename
 		local IMAGEFILE="$(basename "${line}")"
 		local IMAGEFILEDIR="$(dirname "${line}")"
@@ -102,9 +107,7 @@ checkqueue() {
 }
 
 	# Find the images to be ported.
-	images=$(find "${P_IMAGES}" -type f -iname "*.png" -o -iname "*.jpg")
-
-	for line in $images; do
+	for line in $(find "${P_IMAGES}" -type f -iname "*.png" -o -iname "*.jpg"); do
 		# Remember the directory and filename
 		local IMAGEFILE="$(basename "${line}")"
 		local IMAGEFILEDIR="$(dirname "${line}")"
@@ -143,10 +146,9 @@ TWRPUILOOP() {
 # Some themes have multiple xml files.
 # Find and port all based on targeted directory.
 # No user read input is required.
-XML=$(find "${PORT_UI}" -type f -iname "*.xml")
 
 count=0
-for XML_FILE in ${XML}; do
+for XML_FILE in $(find "${PORT_UI}" -type f -iname "*.xml"); do
 	count=$(($count+1))
 	XML_FILE=$(basename ${XML_FILE})
 	# Store filenames in array
@@ -618,11 +620,8 @@ GOTOTTFFONT() {
 
 # Some themes have multiple xml files.
 # Ask user which one to port.
-XML=$(find "${PORT_UI}" -type f -iname "*.xml")
-
 count=0
-
-for XML_FILE in ${XML}; do
+for XML_FILE in $(find "${PORT_UI}" -type f -iname "*.xml"); do
 	count=$(($count+1))
 	XML_FILE=$(basename ${XML_FILE})
 	# Store filenames in array
@@ -855,35 +854,6 @@ if [ ! $CHECKGM ] && [ ! $CHECKPNGCRUSH ]; then
 	echo "Q/q - Exit Script"
 	echo " "
 	read "OPT?Option: "
-	if [[ ! $OPT == "1" ]]; then
-		if [[ ! $OPT == "2" ]]; then
-			if [[ ! $OPT == "3" ]]; then
-				if [[ ! $OPT == "4" ]]; then
-					if [[ ! $OPT == "5" ]]; then
-						if [[ ! $OPT == "6" ]]; then
-							if [[ ! $OPT == "7" ]]; then
-								if [[ ! $OPT == "8" ]]; then
-									if [[ ! $OPT == "9" ]]; then
-										if [[ ! $OPT == "10" ]]; then
-											if [[ ! $OPT == q ]]; then
-												if [[ ! $OPT == Q ]]; then
-													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
-													echo " "
-													echo "Invalid Input: Please try again!"
-													sleep 3
-													HEADSUP
-												fi
-											fi
-										fi
-									fi
-								fi
-							fi
-						fi
-					fi
-				fi
-			fi
-		fi
-	fi
 	case $OPT in
 		1) GOTOTWRPIMAGE ;;
 		2) TWRPUILOOP ;;
@@ -895,8 +865,9 @@ if [ ! $CHECKGM ] && [ ! $CHECKPNGCRUSH ]; then
 		8) PORT_DEVICE ;;
 		9) INSTALLGM ;;
 		10) INSTALLPNGCRUSH ;;
-		Q) clear; echo "Goodbye"; read; clear; exit;;
-		q) clear; echo "Goodbye"; read; clear; exit;;
+		Q) clear; echo "Goodbye"; read; clear; exit ;;
+		q) clear; echo "Goodbye"; read; clear; exit ;;
+		*) echo " "; echo "Invalid option - $OPT" >&2; sleep 2; HEADSUP ;;
 	esac
 elif [[ -n $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
 	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
@@ -915,35 +886,6 @@ elif [[ -n $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
 	echo "Q/q - Exit Script"
 	echo " "
 	read "OPT?Option: "
-	if [[ ! $OPT == "1" ]]; then
-		if [[ ! $OPT == "2" ]]; then
-			if [[ ! $OPT == "3" ]]; then
-				if [[ ! $OPT == "4" ]]; then
-					if [[ ! $OPT == "5" ]]; then
-						if [[ ! $OPT == "6" ]]; then
-							if [[ ! $OPT == "7" ]]; then
-								if [[ ! $OPT == "8" ]]; then
-									if [[ ! $OPT == "9" ]]; then
-										if [[ ! $OPT == "10" ]]; then
-											if [[ ! $OPT == q ]]; then
-												if [[ ! $OPT == Q ]]; then
-													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
-													echo " "
-													echo "Invalid Input: Please try again!"
-													sleep 3
-													HEADSUP
-												fi
-											fi
-										fi
-									fi
-								fi
-							fi
-						fi
-					fi
-				fi
-			fi
-		fi
-	fi
 	case $OPT in
 		1) GOTOTWRPIMAGE ;;
 		2) TWRPUILOOP ;;
@@ -955,8 +897,9 @@ elif [[ -n $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
 		8) PORT_DEVICE ;;
 		9) UNINSTALLGM; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "GraphicsMagick is uninstalled!"; sleep 2; HEADSUP ;;
 		10) UNINSTALLPNGCRUSH; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "pngcrush is uninstalled!"; sleep 2; HEADSUP ;;
-		Q) clear; echo "Goodbye"; read; clear; exit;;
-		q) clear; echo "Goodbye"; read; clear; exit;;
+		Q) clear; echo "Goodbye"; read; clear; exit ;;
+		q) clear; echo "Goodbye"; read; clear; exit ;;
+		*) echo " "; echo "Invalid option - $OPT" >&2; sleep 2; HEADSUP ;;
 	esac
 elif [[ -z $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
 	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
@@ -975,35 +918,6 @@ elif [[ -z $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
 	echo "Q/q - Exit Script"
 	echo " "
 	read "OPT?Option: "
-	if [[ ! $OPT == "1" ]]; then
-		if [[ ! $OPT == "2" ]]; then
-			if [[ ! $OPT == "3" ]]; then
-				if [[ ! $OPT == "4" ]]; then
-					if [[ ! $OPT == "5" ]]; then
-						if [[ ! $OPT == "6" ]]; then
-							if [[ ! $OPT == "7" ]]; then
-								if [[ ! $OPT == "8" ]]; then
-									if [[ ! $OPT == "9" ]]; then
-										if [[ ! $OPT == "10" ]]; then
-											if [[ ! $OPT == q ]]; then
-												if [[ ! $OPT == Q ]]; then
-													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
-													echo " "
-													echo "Invalid Input: Please try again!"
-													sleep 3
-													HEADSUP
-												fi
-											fi
-										fi
-									fi
-								fi
-							fi
-						fi
-					fi
-				fi
-			fi
-		fi
-	fi
 	case $OPT in
 		1) GOTOTWRPIMAGE ;;
 		2) TWRPUILOOP ;;
@@ -1015,8 +929,9 @@ elif [[ -z $CHECKGM ]] && [[ -n $CHECKPNGCRUSH ]]; then
 		8) PORT_DEVICE ;;
 		9) INSTALLGM ;;
 		10) UNINSTALLPNGCRUSH; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "pngcrush is uninstalled!"; sleep 2; HEADSUP ;;
-		Q) clear; echo "Goodbye"; read; clear; exit;;
-		q) clear; echo "Goodbye"; read; clear; exit;;
+		Q) clear; echo "Goodbye"; read; clear; exit ;;
+		q) clear; echo "Goodbye"; read; clear; exit ;;
+		*) echo " "; echo "Invalid option - $OPT" >&2; sleep 2; HEADSUP ;;
 	esac
 elif [[ -n $CHECKGM ]] && [[ -z $CHECKPNGCRUSH ]]; then
 	clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
@@ -1035,35 +950,6 @@ elif [[ -n $CHECKGM ]] && [[ -z $CHECKPNGCRUSH ]]; then
 	echo "Q/q - Exit Script"
 	echo " "
 	read "OPT?Option: "
-	if [[ ! $OPT == "1" ]]; then
-		if [[ ! $OPT == "2" ]]; then
-			if [[ ! $OPT == "3" ]]; then
-				if [[ ! $OPT == "4" ]]; then
-					if [[ ! $OPT == "5" ]]; then
-						if [[ ! $OPT == "6" ]]; then
-							if [[ ! $OPT == "7" ]]; then
-								if [[ ! $OPT == "8" ]]; then
-									if [[ ! $OPT == "9" ]]; then
-										if [[ ! $OPT == "10" ]]; then
-											if [[ ! $OPT == q ]]; then
-												if [[ ! $OPT == Q ]]; then
-													clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"
-													echo " "
-													echo "Invalid Input: Please try again!"
-													sleep 3
-													HEADSUP
-												fi
-											fi
-										fi
-									fi
-								fi
-							fi
-						fi
-					fi
-				fi
-			fi
-		fi
-	fi
 	case $OPT in
 		1) GOTOTWRPIMAGE ;;
 		2) TWRPUILOOP ;;
@@ -1075,8 +961,9 @@ elif [[ -n $CHECKGM ]] && [[ -z $CHECKPNGCRUSH ]]; then
 		8) PORT_DEVICE ;;
 		9) UNINSTALLGM; clear; echo "TWRP Theme Porter - Version $(echo "$VERSION")"; echo " "; echo "GraphicsMagick is uninstalled!"; sleep 2; HEADSUP ;;
 		10) INSTALLPNGCRUSH ;;
-		Q) clear; echo "Goodbye"; read; clear; exit;;
-		q) clear; echo "Goodbye"; read; clear; exit;;
+		Q) clear; echo "Goodbye"; read; clear; exit ;;
+		q) clear; echo "Goodbye"; read; clear; exit ;;
+		*) echo " "; echo "Invalid option - $OPT" >&2; sleep 2; HEADSUP ;;
 	esac
 fi
 }
@@ -1084,7 +971,7 @@ fi
 # Uninstall pngcrush
 UNINSTALLPNGCRUSH() {
 
-if [ -f "/system/bin/pngcrush" ]; then
+if [ -x "/system/bin/pngcrush" ]; then
 	# Mount system as RW.
 	$SU busybox mount -o remount,rw -t auto /system
 	$SU busybox rm -rf "/system/bin/pngcrush"
@@ -1096,7 +983,7 @@ fi
 # Uninstall GM
 UNINSTALLGM() {
 
-if [ -f "/system/bin/gm" ]; then
+if [ -x "/system/bin/gm" ]; then
 	# Mount system as RW.
 	$SU busybox mount -o remount,rw -t auto /system
 	$SU busybox rm -rf "/system/bin/gm"
@@ -1192,7 +1079,10 @@ else
 	HEADSUP
 fi
 }
+
+# Decide action based on given parameters
 INSTALLGM
+
 
 # This is here to insure the script doesn't read the embedded data below 
 # unless absolutely instructed to do so.
